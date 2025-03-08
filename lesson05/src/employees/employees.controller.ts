@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { Prisma } from '@prisma/client';
+import {Throttle, SkipThrottle} from '@nestjs/throttler';
 
+@SkipThrottle() // skip throttling for this controller
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
@@ -11,11 +13,13 @@ export class EmployeesController {
     return this.employeesService.create(createEmployeeDto);
   }
 
+  @SkipThrottle({default: false}) // override default throttle settings
   @Get()
   findAll(@Query('role') role?: 'INTERN' | 'ENGINEER' | 'ADMIN') {
     return this.employeesService.findAll(role);
   }
 
+  @Throttle({short: {ttl: 1000, limit: 1}}) // override default global throttle settings
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.employeesService.findOne(+id);
